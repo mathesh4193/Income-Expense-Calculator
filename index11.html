@@ -315,7 +315,7 @@
         </div>
         <div class="summary-item">
           <p class="label">Net Balance</p>
-          <p id="netBalance" class="amount net-amount">$0.00</p>
+          <p id="netBalance" class="amount net-amount">RS.0.00</p>
         </div>
       </div>
 
@@ -380,9 +380,9 @@
       localStorage.setItem('entries', JSON.stringify(entries));
     }
 
-    // Format amount with $ and 2 decimals
+    // Format amount with RS. and 2 decimals
     function formatAmount(num) {
-      return '$' + Number(num).toFixed(2);
+      return 'RS.' + Number(num).toFixed(2);
     }
 
     // Render entries with filter
@@ -421,13 +421,13 @@
 
         const editBtn = document.createElement('button');
         editBtn.textContent = 'Edit';
-        editBtn.setAttribute('aria-label', `Edit entry: ${entry.description}`);
+        editBtn.setAttribute('aria-label', `Edit entry: RS.{entry.description}`);
         editBtn.addEventListener('click', () => startEditEntry(entry.id));
 
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = 'Delete';
         deleteBtn.className = 'delete-btn';
-        deleteBtn.setAttribute('aria-label', `Delete entry: ${entry.description}`);
+        deleteBtn.setAttribute('aria-label', `Delete entry: RS.{entry.description}`);
         deleteBtn.addEventListener('click', () => deleteEntry(entry.id));
 
         actionsDiv.appendChild(editBtn);

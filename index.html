@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Income Expense Calculator</title>
+<title>Income Expense Tracker</title>
 
-<!-- Chart & Excel -->
+<!-- Chart.js & Excel -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
@@ -15,11 +15,11 @@ body{background:#f4f7fc;display:flex;flex-direction:column;min-height:100vh}
 header,footer{background:#003366;color:#fff;text-align:center;padding:1rem}
 main{flex:1;display:flex;justify-content:center;padding:1rem}
 
-.calculator{background:#fff;max-width:650px;width:100%;padding:1.5rem;border-radius:10px;box-shadow:0 10px 20px rgba(0,0,0,.1)}
+.container{background:#fff;max-width:650px;width:100%;padding:1.5rem;border-radius:10px;box-shadow:0 10px 20px rgba(0,0,0,.1)}
 h2{text-align:center;color:#003366;margin-bottom:1rem}
 
 .summary{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
-.summary-item{flex:1;background:#e8f0fe;padding:1rem;border-radius:8px;text-align:center}
+.summary div{flex:1;padding:1rem;border-radius:8px;text-align:center;background:#e8f0fe}
 .income{color:#2e7d32}
 .expense{color:#c62828}
 .net{color:#1565c0}
@@ -27,18 +27,17 @@ h2{text-align:center;color:#003366;margin-bottom:1rem}
 form{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem}
 input,select,button{padding:.7rem;border-radius:6px;border:1px solid #ccc}
 button{background:#003366;color:#fff;border:none;cursor:pointer}
-button:hover{opacity:.9}
 #resetBtn{background:#c62828}
 
 .filters{display:flex;justify-content:center;gap:1.5rem;margin-bottom:1rem}
 
-ul{list-style:none;max-height:250px;overflow-y:auto}
-li{display:flex;justify-content:space-between;padding:.7rem;border-bottom:1px solid #eee}
+ul{list-style:none;max-height:220px;overflow-y:auto}
+li{display:flex;justify-content:space-between;padding:.6rem;border-bottom:1px solid #eee}
 
 @media(max-width:600px){
 .summary{flex-direction:column}
 form{flex-direction:column}
-li{flex-direction:column;gap:.5rem}
+li{flex-direction:column;gap:.4rem}
 }
 </style>
 </head>
@@ -50,20 +49,20 @@ li{flex-direction:column;gap:.5rem}
 </header>
 
 <main>
-<div class="calculator">
+<div class="container">
 
 <h2>Income Expense Calculator</h2>
 
 <div class="summary">
-  <div class="summary-item">
+  <div>
     <p>Total Income</p>
     <h3 id="totalIncome" class="income">RS.0.00</h3>
   </div>
-  <div class="summary-item">
+  <div>
     <p>Total Expense</p>
     <h3 id="totalExpense" class="expense">RS.0.00</h3>
   </div>
-  <div class="summary-item">
+  <div>
     <p>Net Balance</p>
     <h3 id="netBalance" class="net">RS.0.00</h3>
   </div>
@@ -92,7 +91,8 @@ li{flex-direction:column;gap:.5rem}
 
 <ul id="entryList"></ul>
 
-<canvas id="dailyChart" style="margin-top:25px"></canvas>
+<!-- SCATTER PLOT -->
+<canvas id="scatterChart" style="margin-top:25px"></canvas>
 
 </div>
 </main>
@@ -111,7 +111,7 @@ const resetBtn=document.getElementById("resetBtn");
 const filterRadios=document.querySelectorAll("input[name=filter]");
 
 let entries=JSON.parse(localStorage.getItem("entries"))||[];
-let chart;
+let scatterChart;
 
 function save(){localStorage.setItem("entries",JSON.stringify(entries))}
 
@@ -128,7 +128,7 @@ li.innerHTML=`
 entryList.appendChild(li);
 });
 updateSummary();
-renderChart();
+renderScatterPlot();
 }
 
 function updateSummary(){
@@ -157,7 +157,7 @@ save();render(getFilter());
 }
 
 resetBtn.onclick=()=>{
-if(confirm("Reset all?")){
+if(confirm("Reset all entries?")){
 entries=[];save();render();
 }
 };
@@ -165,25 +165,33 @@ entries=[];save();render();
 filterRadios.forEach(r=>r.onchange=()=>render(getFilter()));
 function getFilter(){return document.querySelector("input[name=filter]:checked").value}
 
-function renderChart(){
-const daily={};
-entries.forEach(e=>{
-daily[e.date]??={income:0,expense:0};
-daily[e.date][e.type]+=e.amount;
-});
-const labels=Object.keys(daily);
-const income=labels.map(d=>daily[d].income);
-const expense=labels.map(d=>daily[d].expense);
+function renderScatterPlot(){
+const incomePoints=[];
+const expensePoints=[];
 
-const ctx=document.getElementById("dailyChart");
-if(chart)chart.destroy();
-chart=new Chart(ctx,{
-type:"bar",
-data:{labels,datasets:[
-{label:"Income",data:income},
-{label:"Expense",data:expense}
-]},
-options:{responsive:true}
+entries.forEach((e,i)=>{
+const p={x:i+1,y:e.amount};
+e.type==="income"?incomePoints.push(p):expensePoints.push(p);
+});
+
+const ctx=document.getElementById("scatterChart");
+if(scatterChart)scatterChart.destroy();
+
+scatterChart=new Chart(ctx,{
+type:"scatter",
+data:{
+datasets:[
+{label:"Income",data:incomePoints,backgroundColor:"green"},
+{label:"Expense",data:expensePoints,backgroundColor:"red"}
+]
+},
+options:{
+responsive:true,
+scales:{
+x:{title:{display:true,text:"Entry Order"}},
+y:{title:{display:true,text:"Amount (RS)"}}
+}
+}
 });
 }
 

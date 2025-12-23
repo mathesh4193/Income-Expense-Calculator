@@ -91,8 +91,8 @@ li{flex-direction:column;gap:.4rem}
 
 <ul id="entryList"></ul>
 
-<!-- SCATTER PLOT -->
-<canvas id="scatterChart" style="margin-top:25px"></canvas>
+<!-- HISTOGRAM -->
+<canvas id="histogramChart" style="margin-top:25px"></canvas>
 
 </div>
 </main>
@@ -111,7 +111,7 @@ const resetBtn=document.getElementById("resetBtn");
 const filterRadios=document.querySelectorAll("input[name=filter]");
 
 let entries=JSON.parse(localStorage.getItem("entries"))||[];
-let scatterChart;
+let histogramChart;
 
 function save(){localStorage.setItem("entries",JSON.stringify(entries))}
 
@@ -128,7 +128,7 @@ li.innerHTML=`
 entryList.appendChild(li);
 });
 updateSummary();
-renderScatterPlot();
+renderHistogram();
 }
 
 function updateSummary(){
@@ -165,31 +165,40 @@ entries=[];save();render();
 filterRadios.forEach(r=>r.onchange=()=>render(getFilter()));
 function getFilter(){return document.querySelector("input[name=filter]:checked").value}
 
-function renderScatterPlot(){
-const incomePoints=[];
-const expensePoints=[];
+function renderHistogram(){
+const income=entries.filter(e=>e.type==="income").map(e=>e.amount);
+const expense=entries.filter(e=>e.type==="expense").map(e=>e.amount);
 
-entries.forEach((e,i)=>{
-const p={x:i+1,y:e.amount};
-e.type==="income"?incomePoints.push(p):expensePoints.push(p);
+const labels=[ "0-1k","1k-5k","5k-10k","10k+" ];
+
+function bin(data){
+const bins=[0,0,0,0];
+data.forEach(v=>{
+if(v<=1000)bins[0]++;
+else if(v<=5000)bins[1]++;
+else if(v<=10000)bins[2]++;
+else bins[3]++;
 });
+return bins;
+}
 
-const ctx=document.getElementById("scatterChart");
-if(scatterChart)scatterChart.destroy();
+const ctx=document.getElementById("histogramChart");
+if(histogramChart)histogramChart.destroy();
 
-scatterChart=new Chart(ctx,{
-type:"scatter",
+histogramChart=new Chart(ctx,{
+type:"bar",
 data:{
+labels,
 datasets:[
-{label:"Income",data:incomePoints,backgroundColor:"green"},
-{label:"Expense",data:expensePoints,backgroundColor:"red"}
+{label:"Income",data:bin(income),backgroundColor:"green"},
+{label:"Expense",data:bin(expense),backgroundColor:"red"}
 ]
 },
 options:{
 responsive:true,
 scales:{
-x:{title:{display:true,text:"Entry Order"}},
-y:{title:{display:true,text:"Amount (RS)"}}
+y:{title:{display:true,text:"Frequency"}},
+x:{title:{display:true,text:"Amount Range (RS)"}}
 }
 }
 });
